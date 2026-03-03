@@ -41,19 +41,19 @@ When a user sends `/add` followed by channel IDs:
 
 ### Successful addition
 
-```
+```text
 Added -1001234567890
 ```
 
 ### Channel already exists
 
-```
+```text
 -1001234567890 Already In Database
 ```
 
 ### Invalid channel ID
 
-```
+```text
 Invalid abc123
 ```
 
@@ -82,14 +82,15 @@ def add_channels(m):
 
 ### Add a single channel
 
-```
+```text
 /add -1001234567890
 ```
 
 ### Add multiple channels
 
-```
-/add -1001234567890
+```text
+/add
+-1001234567890
 -1009876543210
 -1001122334455
 ```

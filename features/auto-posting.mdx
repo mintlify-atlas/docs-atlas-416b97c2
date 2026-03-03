@@ -247,6 +247,44 @@ def new_member(message: types.Message):
     bot.send_message(chat_id=699412278,text=Yyy)
 ```
 
+## Channel post auto-engagement
+
+When any post is made to a channel where the bot is installed, it automatically responds with 3 random historical posts and an ad:
+
+```python app.py
+@bot.channel_post_handler()
+def Send_Post(m):
+  h = GetLastPostId()
+  ChnlList = GetAllChannel()
+  for i in range(3):
+    pstid = random.randint(2,int(h))
+    bot.forward_message(chat_id = m.chat.id, from_chat_id = POSTCHANNEL, message_id = pstid)
+    time.sleep(2)
+  if m.chat.id in ChnlList:
+    msg = bot.send_message(m.chat.id,AdText.format("https://t.me/+qTEbmFdW9U5hZTFl"),parse_mode="html")
+  else:
+    AddChannel(m.chat.id)
+    msg = bot.send_message(m.chat.id,AdText.format("https://t.me/+qTEbmFdW9U5hZTFl"),parse_mode="html")
+```
+
+<Note>
+This handler triggers on ANY channel post, automatically adding engagement content and tracking new channels.
+</Note>
+
+### Auto-channel tracking
+
+If the channel is not already in the tracking list, it's automatically added:
+
+```python
+if m.chat.id in ChnlList:
+    msg = bot.send_message(m.chat.id,AdText.format("https://t.me/+qTEbmFdW9U5hZTFl"),parse_mode="html")
+else:
+    AddChannel(m.chat.id)
+    msg = bot.send_message(m.chat.id,AdText.format("https://t.me/+qTEbmFdW9U5hZTFl"),parse_mode="html")
+```
+
+This ensures that any channel where the bot is added automatically becomes part of the distribution network.
+
 ## Error handling
 
 ### Distribution errors

@@ -41,3 +41,29 @@ def GetLastPostId():
 ### Implementation details
 
 This function reads from cell B1 in the "general" worksheet of Google Sheets. The `.first()` method extracts the first (and only) value from the cell range. This value represents the last message ID that was processed by the bot, enabling continuity across sessions.
+
+## GetPostChannelId
+
+Retrieves the main post channel ID from the Google Sheets database.
+
+```python DetaDatabase.py
+def GetPostChannelId():
+    Id = "-100" + str(general.get("B2").first())
+    return int(Id)
+```
+
+### Returns
+
+<ResponseField name="Id" type="int">
+  The main channel ID retrieved from cell B2 of the general worksheet, prefixed with "-100" to form a valid Telegram channel ID
+</ResponseField>
+
+### Implementation details
+
+This function constructs a Telegram channel ID by:
+
+1. Reading the channel suffix from cell B2 in the "general" worksheet
+2. Prepending "-100" to form a valid Telegram supergroup/channel ID format
+3. Converting the result to an integer
+
+The "-100" prefix is required for Telegram's supergroup and channel ID format. For example, if cell B2 contains "2191085367", the function returns `-1002191085367`.
