@@ -1,0 +1,67 @@
+---
+title: /start command
+description: Welcome command that verifies user authorization status
+---
+
+## Overview
+
+The `/start` command is the initial command users interact with when starting the bot. It verifies whether the user is authorized to use the bot by checking their chat ID against the authorized users database.
+
+## Function signature
+
+```python
+@bot.message_handler(commands=['start'])
+def send_welcome(m):
+```
+
+## Authorization
+
+<Warning>
+This command requires user authorization. Only users whose chat ID exists in the authorized users database can receive a success response.
+</Warning>
+
+The command uses `CheckAuthUser(m.chat.id)` to verify authorization.
+
+## Behavior
+
+When a user sends `/start`, the bot:
+
+1. Checks if the user's chat ID is in the authorized users list
+2. Returns one of two responses based on authorization status
+
+## Response examples
+
+### Authorized user
+
+```
+Runnung..
+```
+
+### Unauthorized user
+
+```
+you are not authrise
+```
+
+## Code implementation
+
+```python
+@bot.message_handler(commands=['start'])
+def send_welcome(m):
+  if CheckAuthUser(m.chat.id) == True:
+    bot.reply_to(m,"Runnung..")
+  else:
+    bot.reply_to(m,"you are not authrise")
+```
+
+## Usage
+
+Simply send the command in any chat with the bot:
+
+```
+/start
+```
+
+<Info>
+This command is typically the first interaction users have with the bot and serves as an entry point for authorization verification.
+</Info>

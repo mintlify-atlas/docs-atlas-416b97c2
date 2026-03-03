@@ -1,0 +1,106 @@
+---
+title: /add command
+description: Add channel IDs to the bot's distribution database
+---
+
+## Overview
+
+The `/add` command allows authorized users to add channel IDs to the bot's database. These channels will receive posts distributed by the bot.
+
+## Function signature
+
+```python
+@bot.message_handler(commands=['add'])
+def add_channels(m):
+```
+
+## Parameters
+
+<ParamField path="channel_ids" type="string" required>
+  One or more channel IDs, separated by newlines. Each ID should be an integer representing a Telegram channel.
+</ParamField>
+
+## Authorization
+
+<Warning>
+While not explicitly checked in the function, this command should only be used by bot administrators who have access to the bot.
+</Warning>
+
+## Behavior
+
+When a user sends `/add` followed by channel IDs:
+
+1. Extracts arguments from the command text using `util.extract_arguments(m.text)`
+2. Splits the input by newlines to get individual channel IDs
+3. For each channel ID:
+   - Validates that it's an integer
+   - Attempts to add it to the database using `AddChannel(i)`
+   - Returns appropriate status message
+
+## Response examples
+
+### Successful addition
+
+```
+Added -1001234567890
+```
+
+### Channel already exists
+
+```
+-1001234567890 Already In Database
+```
+
+### Invalid channel ID
+
+```
+Invalid abc123
+```
+
+## Code implementation
+
+```python
+@bot.message_handler(commands=['add'])
+def add_channels(m):
+    tt = util.extract_arguments(m.text)
+    ListChnl = tt.split("\n")
+    for i in ListChnl:
+      Integer = isinstance(i, int)
+      if Integer == True:
+        xx = AddChannel(i)
+        if xx == True:
+          bot.reply_to(m,f"{i} Already In Database")
+          time.sleep(1)
+        else:
+          bot.reply_to(m,f"Added {i}")
+          time.sleep(2)
+      else:
+          bot.reply_to(m,f"Invalid {i}")
+```
+
+## Usage
+
+### Add a single channel
+
+```
+/add -1001234567890
+```
+
+### Add multiple channels
+
+```
+/add -1001234567890
+-1009876543210
+-1001122334455
+```
+
+<Info>
+The bot includes delays (1-2 seconds) between responses to avoid rate limiting.
+</Info>
+
+## Notes
+
+- Channel IDs must be integers (typically negative numbers for channels)
+- The command processes multiple channels sequentially
+- Duplicate channels are detected and reported
+- Invalid formats are rejected with an error message

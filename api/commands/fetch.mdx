@@ -1,0 +1,133 @@
+---
+title: /fetch command
+description: Retrieve detailed information about all registered channels
+---
+
+## Overview
+
+The `/fetch` command retrieves and displays detailed information about all channels registered in the bot's database. This is useful for monitoring channel status, subscriber counts, and verifying channel accessibility.
+
+## Function signature
+
+```python
+@bot.message_handler(commands=['fetch'])
+def fetchresult(m):
+```
+
+## Authorization
+
+<Warning>
+This command does not explicitly check for authorization, but should only be used by bot administrators as it accesses sensitive channel information.
+</Warning>
+
+## Behavior
+
+When invoked, the command:
+
+1. Retrieves all channel IDs from the database using `GetAllChannel()`
+2. For each channel:
+   - Fetches channel details using Telegram's `bot.get_chat()` API
+   - Retrieves subscriber count using `bot.get_chat_members_count()`
+   - Sends formatted channel information to the command issuer
+3. Handles errors gracefully if a channel is inaccessible
+
+## Response examples
+
+### Successful channel fetch
+
+```
+Id = -1001234567890
+Name = My TeraBox Channel
+Url = https://t.me/+AbCdEfGhIjKl
+Subscribers = 1523
+```
+
+### Channel error
+
+If the bot cannot access a channel:
+
+```
+id=-1001234567890
+
+[Error message from Telegram API]
+```
+
+## Code implementation
+
+```python
+@bot.message_handler(commands=['fetch'])
+def fetchresult(m):
+  chnlList = GetAllChannel()
+  ChatDetail = """
+  Id = {}
+  Name = {}
+  Url = {}
+  Subscribers = {}
+  """
+  for i in chnlList:
+    try:
+      chatdtl = bot.get_chat(f"{i}")
+      chatId = chatdtl.id
+      chatTtl = chatdtl.title
+      chatUrl = chatdtl.invite_link
+      Susb = bot.get_chat_members_count(f"{i}")
+      bot.send_message(m.chat.id,ChatDetail.format(chatId,chatTtl,chatUrl,Susb))
+    except Exception as e:
+      bot.send_message(m.chat.id,f"id={i}\n\n{e}")
+```
+
+## Usage
+
+Simply send the command:
+
+```
+/fetch
+```
+
+## Parameters
+
+This command takes no parameters.
+
+## Returned information
+
+<ParamField path="Id" type="integer">
+  The unique Telegram chat ID of the channel (typically a negative number)
+</ParamField>
+
+<ParamField path="Name" type="string">
+  The channel's display title
+</ParamField>
+
+<ParamField path="Url" type="string">
+  The channel's invite link (if available)
+</ParamField>
+
+<ParamField path="Subscribers" type="integer">
+  Total number of members in the channel
+</ParamField>
+
+## Error handling
+
+<Info>
+The command uses try-except blocks to handle channels that may be inaccessible, deleted, or where the bot lacks permissions.
+</Info>
+
+Common errors include:
+- Channel not found (deleted or invalid ID)
+- Bot removed from channel
+- Insufficient permissions to view channel details
+
+## Use cases
+
+- Audit all registered channels
+- Monitor subscriber growth
+- Verify bot has access to all channels
+- Identify channels that need attention
+- Get invite links for all channels at once
+
+## Notes
+
+- Each channel's information is sent as a separate message
+- The command processes channels sequentially
+- No rate limiting delays are implemented (use with caution on large channel lists)
+- Invite links may be `None` if the channel is public or the bot lacks permission

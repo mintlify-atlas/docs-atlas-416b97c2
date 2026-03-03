@@ -1,0 +1,392 @@
+---
+title: Installation
+description: Detailed installation and setup instructions for TeraBox Auto bot
+---
+
+This guide covers the complete installation process for TeraBox Auto, including all prerequisites, dependencies, and configuration steps.
+
+## System requirements
+
+### Python version
+
+TeraBox Auto requires Python 3.11.0 as specified in `runtime.txt`:
+
+```bash
+python --version
+# Should output: Python 3.11.0 or higher
+```
+
+<Info>
+  While the bot specifies Python 3.11.0, it should work with Python 3.11.x versions. Avoid using Python 3.12+ as dependencies may not be fully compatible.
+</Info>
+
+### Operating system
+
+The bot is platform-independent and works on:
+- Linux (recommended for production)
+- macOS
+- Windows (with proper Python setup)
+
+## Installing dependencies
+
+### Required packages
+
+The bot requires the following Python packages from `requirements.txt`:
+
+<CodeGroup>
+  ```txt requirements.txt
+  Flask 
+  Gunicorn
+  pyTelegramBotAPI
+  random2
+  gspread
+  oauth2client
+  ```
+</CodeGroup>
+
+### Install via pip
+
+Install all dependencies at once:
+
+```bash
+pip install -r requirements.txt
+```
+
+Or install individually:
+
+```bash
+pip install Flask Gunicorn pyTelegramBotAPI random2 gspread oauth2client
+```
+
+### Dependency overview
+
+| Package | Version | Purpose |
+|---------|---------|----------|
+| Flask | Latest | Web server for webhook handling |
+| Gunicorn | Latest | Production WSGI server |
+| pyTelegramBotAPI | Latest | Telegram Bot API wrapper (telebot) |
+| random2 | Latest | Enhanced random number generation |
+| gspread | Latest | Google Sheets API integration |
+| oauth2client | Latest | Google API authentication |
+
+<Note>
+  The `requirements.txt` file does not specify version numbers, so pip will install the latest compatible versions.
+</Note>
+
+## Google Sheets setup
+
+### Step 1: Create a Google Cloud project
+
+<Steps>
+  <Step title="Navigate to Google Cloud Console">
+    Go to [Google Cloud Console](https://console.cloud.google.com/) and create a new project.
+  </Step>
+
+  <Step title="Enable Google Sheets API">
+    In your project, navigate to **APIs & Services > Library** and enable:
+    - Google Sheets API
+    - Google Drive API
+  </Step>
+
+  <Step title="Create service account credentials">
+    1. Go to **APIs & Services > Credentials**
+    2. Click **Create Credentials > Service Account**
+    3. Fill in the service account details
+    4. Grant the service account **Editor** role
+    5. Click **Done**
+  </Step>
+
+  <Step title="Generate JSON key file">
+    1. Click on the created service account
+    2. Go to the **Keys** tab
+    3. Click **Add Key > Create New Key**
+    4. Select **JSON** format
+    5. Download the file
+  </Step>
+</Steps>
+
+### Step 2: Configure credentials file
+
+Place the credentials file in your project root:
+
+```bash
+# The code expects this specific filename
+cp ~/Downloads/your-project-xxxxx.json Badnaamchora2784.json
+```
+
+<Warning>
+  The filename `Badnaamchora2784.json` is hardcoded in `DetaDatabase.py:18`. You must either use this exact name or modify the code.
+</Warning>
+
+### Step 3: Create Google Sheet structure
+
+Create a Google Sheet named **TeraX2nd** with the following structure:
+
+#### Worksheet 1: general
+
+| | A | B |
+|---|---|---|
+| 1 | | Last post message ID |
+| 2 | | Post channel ID (without -100 prefix) |
+
+Example values:
+- B1: `450` (the message ID of the last post)
+- B2: `2191085367` (the channel ID without -100)
+
+#### Worksheet 2: channels
+
+| A | B |
+|---|---|
+| 1 | 1 | -1001234567890 |
+| 2 | 2 | -1009876543210 |
+| ... | ... | ... |
+| 51 | Counter | |
+
+- Column A: Row numbers for tracking
+- Column B: Channel IDs to distribute posts to
+- Cell A51: Current counter value (e.g., "2" if you have 2 channels)
+
+<Info>
+  Share the Google Sheet with the service account email (found in your JSON credentials file) and grant **Edit** permissions.
+</Info>
+
+## Telegram bot setup
+
+### Step 1: Create bot with BotFather
+
+<Steps>
+  <Step title="Start conversation with BotFather">
+    Open Telegram and search for [@BotFather](https://t.me/BotFather).
+  </Step>
+
+  <Step title="Create new bot">
+    Send `/newbot` and follow the prompts:
+    - Choose a name for your bot (e.g., "TeraBox Auto")
+    - Choose a username ending in "bot" (e.g., "terabox_auto_bot")
+  </Step>
+
+  <Step title="Save the API token">
+    BotFather will provide an API token like:
+    ```
+    5844765948:AAHWS5tgMWMAKGlTk_EWgOsUdfCwQy58-hs
+    ```
+    Save this securely - you'll need it for configuration.
+  </Step>
+</Steps>
+
+### Step 2: Get channel IDs
+
+You need the channel IDs for:
+1. Your main post channel
+2. Any distribution channels
+
+To get a channel ID:
+
+<Steps>
+  <Step title="Add bot to channel">
+    Add your bot as an administrator to the channel.
+  </Step>
+
+  <Step title="Forward a message">
+    Forward any message from the channel to [@userinfobot](https://t.me/userinfobot) or similar bots.
+  </Step>
+
+  <Step title="Note the ID">
+    The ID will be in the format `-1001234567890`.
+  </Step>
+</Steps>
+
+### Step 3: Get your user ID
+
+To authorize yourself to use the bot:
+
+1. Message [@userinfobot](https://t.me/userinfobot) on Telegram
+2. It will reply with your user ID (e.g., `5507466970`)
+3. Add this ID to the `AuthUser` list in `config.py`
+
+## Configuration files
+
+### config.py
+
+Edit `config.py` with your actual values:
+
+```python config.py
+POSTCHANNEL = -1002191085367  # Your main channel ID (with -100 prefix)
+GENERALCHANNEL = "https://t.me/+yourChannelInviteLink"
+
+PostText = """<b>{}🥰
+  
+{}
+{}
+  
+🛑Login to watch full video🛑
+━━━━━━━━━━━━━━━━━━━━━
+✅ ᴊᴏɪɴ ɴᴏᴡ ꜰᴏʀ ᴍᴏʀᴇ ᴠɪᴅᴇᴏꜱ!
+{}
+  </b>"""
+
+AuthUser = [5507466970, 1958848922]  # Replace with your user IDs
+
+AdText = """<a href='{}'>🔞 Join Our Private Channel
+🔞 Join Our Private Channel</a>"""
+```
+
+<Note>
+  The `PostText` template uses Python string formatting with `{}` placeholders. The bot fills these with: title, URL (twice), and channel link.
+</Note>
+
+### app.py
+
+Update the API token and webhook URL in `app.py`:
+
+```python app.py
+# Line 20
+API_TOKEN = 'YOUR_BOT_TOKEN_FROM_BOTFATHER'
+
+# Line 197 in webhook() function
+bot.set_webhook(url='https://your-deployment-url.com/' + f"{API_TOKEN}")
+```
+
+<Warning>
+  Never commit your actual API token to version control. Consider using environment variables for production deployments.
+</Warning>
+
+## Deployment options
+
+### Local development
+
+For local testing:
+
+```bash
+python app.py
+```
+
+The server runs on `http://0.0.0.0:1000` by default.
+
+<Info>
+  Local development requires a public HTTPS URL for webhooks. Consider using ngrok or similar tools for local webhook testing.
+</Info>
+
+### Render deployment
+
+The project includes `runtime.txt` for Render:
+
+<Steps>
+  <Step title="Create new Web Service">
+    Connect your GitHub repository to Render.
+  </Step>
+
+  <Step title="Configure build settings">
+    - Build Command: `pip install -r requirements.txt`
+    - Start Command: `gunicorn app:server -b 0.0.0.0:$PORT`
+  </Step>
+
+  <Step title="Set environment variables">
+    Add `PORT` if required (Render usually sets this automatically).
+  </Step>
+
+  <Step title="Deploy">
+    Render will build and deploy your application.
+  </Step>
+
+  <Step title="Update webhook URL">
+    Update the webhook URL in `app.py` to match your Render URL.
+  </Step>
+</Steps>
+
+### Heroku deployment
+
+For Heroku, create a `Procfile`:
+
+```txt Procfile
+web: gunicorn app:server
+```
+
+Then deploy:
+
+```bash
+heroku create your-app-name
+git push heroku main
+```
+
+## Verification
+
+After installation, verify everything works:
+
+<Steps>
+  <Step title="Check dependencies">
+    ```bash
+    pip list | grep -E "Flask|Gunicorn|pyTelegramBotAPI|gspread"
+    ```
+  </Step>
+
+  <Step title="Test Google Sheets connection">
+    ```python
+    python -c "from DetaDatabase import GetAllChannel; print(GetAllChannel())"
+    ```
+    Should print your list of channels without errors.
+  </Step>
+
+  <Step title="Test bot connection">
+    Send `/start` to your bot. Authorized users should see "Runnung..".
+  </Step>
+
+  <Step title="Initialize webhook">
+    Visit your deployment URL:
+    ```
+    curl https://your-app-url.com/
+    ```
+    Should return "!uk".
+  </Step>
+</Steps>
+
+## Troubleshooting
+
+### Import errors
+
+```
+ModuleNotFoundError: No module named 'telebot'
+```
+
+Solution: Install pyTelegramBotAPI
+```bash
+pip install pyTelegramBotAPI
+```
+
+### Google Sheets authentication errors
+
+```
+gspread.exceptions.APIError: [403] The caller does not have permission
+```
+
+Solution: Share your Google Sheet with the service account email and grant edit permissions.
+
+### Webhook errors
+
+```
+telebot.apihelper.ApiTelegramException: Error code: 401. Description: Unauthorized
+```
+
+Solution: Check that your API token in `app.py` is correct.
+
+### Port binding errors
+
+```
+OSError: [Errno 48] Address already in use
+```
+
+Solution: Change the port or kill the process using port 1000:
+```bash
+lsof -ti:1000 | xargs kill -9
+```
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Quick start guide" icon="rocket" href="/quickstart">
+    Follow the quick start to get your bot running
+  </Card>
+  <Card title="Configuration guide" icon="sliders" href="/configuration">
+    Learn how to customize templates and behavior
+  </Card>
+</CardGroup>

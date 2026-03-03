@@ -1,0 +1,433 @@
+---
+title: Docker deployment
+description: Containerize and deploy TeraBox Auto bot using Docker
+---
+
+## Overview
+
+Docker provides a consistent deployment environment by containerizing the TeraBox Auto application with all its dependencies. This approach ensures the bot runs identically across development, staging, and production environments.
+
+## Prerequisites
+
+Before deploying with Docker, ensure you have:
+
+- Docker installed on your system
+- Docker Compose (optional, for easier management)
+- Basic understanding of Docker concepts
+
+## Dockerfile configuration
+
+Create a `Dockerfile` in your project root:
+
+```dockerfile Dockerfile
+# Use official Python runtime as base image
+FROM python:3.11.0-slim
+
+# Set working directory in container
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements file
+COPY requirements.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application code
+COPY . .
+
+# Expose port (Render/Heroku will override with PORT env var)
+EXPOSE 8080
+
+# Set environment variables
+ENV PORT=8080
+ENV PYTHONUNBUFFERED=1
+
+# Run the application
+CMD ["python", "app.py"]
+```
+
+### Multi-stage build (optimized)
+
+For smaller image sizes, use a multi-stage build:
+
+```dockerfile Dockerfile.optimized
+FROM python:3.11.0-slim as builder
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir --user -r requirements.txt
+
+FROM python:3.11.0-slim
+
+WORKDIR /app
+
+COPY --from=builder /root/.local /root/.local
+COPY . .
+
+ENV PATH=/root/.local/bin:$PATH
+ENV PORT=8080
+ENV PYTHONUNBUFFERED=1
+
+EXPOSE 8080
+
+CMD ["python", "app.py"]
+```
+
+## Docker Compose setup
+
+Create a `docker-compose.yml` file for easier management:
+
+```yaml docker-compose.yml
+version: '3.8'
+
+services:
+  terabox-bot:
+    build: .
+    container_name: terabox-auto-bot
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - bot-network
+
+networks:
+  bot-network:
+    driver: bridge
+```
+
+## Building and running
+
+<Steps>
+  <Step title="Build Docker image">
+    Build the Docker image from your project directory:
+
+    ```bash
+    docker build -t terabox-auto:latest .
+    ```
+
+    This creates an image tagged as `terabox-auto:latest`.
+  </Step>
+
+  <Step title="Run container">
+    Start the container:
+
+    <CodeGroup>
+    ```bash Docker CLI
+    docker run -d \
+      --name terabox-bot \
+      -p 8080:8080 \
+      -e PORT=8080 \
+      --restart unless-stopped \
+      terabox-auto:latest
+    ```
+
+    ```bash Docker Compose
+    docker-compose up -d
+    ```
+    </CodeGroup>
+  </Step>
+
+  <Step title="Verify container is running">
+    Check container status:
+
+    ```bash
+    docker ps
+    ```
+
+    View container logs:
+
+    ```bash
+    docker logs terabox-bot
+    ```
+  </Step>
+
+  <Step title="Initialize webhook">
+    Visit the container's endpoint to set up the webhook:
+
+    ```bash
+    curl http://localhost:8080/
+    ```
+
+    You should receive "!uk" response.
+  </Step>
+</Steps>
+
+## Environment variables
+
+Pass environment variables to the container:
+
+### Using Docker CLI
+
+```bash
+docker run -d \
+  --name terabox-bot \
+  -p 8080:8080 \
+  -e PORT=8080 \
+  terabox-auto:latest
+```
+
+### Using .env file
+
+Create a `.env` file:
+
+```bash .env
+PORT=8080
+```
+
+Reference in docker-compose.yml:
+
+```yaml docker-compose.yml
+services:
+  terabox-bot:
+    env_file:
+      - .env
+```
+
+## Dependencies reference
+
+The application requires these packages (from requirements.txt):
+
+```txt requirements.txt
+Flask
+Gunicorn
+pyTelegramBotAPI
+random2
+gspread
+oauth2client
+```
+
+<Note>
+All dependencies are automatically installed during the Docker build process.
+</Note>
+
+## Container management
+
+### View logs
+
+Monitor real-time logs:
+
+```bash
+docker logs -f terabox-bot
+```
+
+### Restart container
+
+```bash
+docker restart terabox-bot
+```
+
+### Stop container
+
+```bash
+docker stop terabox-bot
+```
+
+### Remove container
+
+```bash
+docker rm terabox-bot
+```
+
+### Update application
+
+Rebuild and restart the container:
+
+```bash
+docker-compose down
+docker-compose up -d --build
+```
+
+## Production deployment
+
+### Using Docker Swarm
+
+For multi-container orchestration:
+
+<Steps>
+  <Step title="Initialize swarm">
+    ```bash
+    docker swarm init
+    ```
+  </Step>
+
+  <Step title="Create stack file">
+    ```yaml docker-stack.yml
+    version: '3.8'
+
+    services:
+      terabox-bot:
+        image: terabox-auto:latest
+        deploy:
+          replicas: 2
+          restart_policy:
+            condition: on-failure
+            delay: 5s
+            max_attempts: 3
+        ports:
+          - "8080:8080"
+        environment:
+          - PORT=8080
+    ```
+  </Step>
+
+  <Step title="Deploy stack">
+    ```bash
+    docker stack deploy -c docker-stack.yml terabox
+    ```
+  </Step>
+</Steps>
+
+### Using Kubernetes
+
+For enterprise-scale deployments, create Kubernetes manifests:
+
+```yaml deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: terabox-auto
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: terabox-auto
+  template:
+    metadata:
+      labels:
+        app: terabox-auto
+    spec:
+      containers:
+      - name: terabox-bot
+        image: terabox-auto:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: PORT
+          value: "8080"
+```
+
+## Troubleshooting
+
+### Container exits immediately
+
+Check logs for errors:
+```bash
+docker logs terabox-bot
+```
+
+Common causes:
+- Missing dependencies
+- Incorrect Python version
+- Application crashes on startup
+
+### Cannot connect to container
+
+Verify port mapping:
+```bash
+docker port terabox-bot
+```
+
+Ensure the port is not already in use:
+```bash
+lsof -i :8080
+```
+
+### Image build fails
+
+Check for:
+- Network connectivity issues
+- Invalid package names in requirements.txt
+- Base image availability
+
+### High memory usage
+
+Limit container resources:
+
+```bash
+docker run -d \
+  --name terabox-bot \
+  --memory="512m" \
+  --cpus="1.0" \
+  -p 8080:8080 \
+  terabox-auto:latest
+```
+
+## Best practices
+
+<Warning>
+Never hardcode sensitive information like bot tokens in the Dockerfile. Always use environment variables or Docker secrets.
+</Warning>
+
+### Use .dockerignore
+
+Create a `.dockerignore` file to exclude unnecessary files:
+
+```text .dockerignore
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+.git
+.gitignore
+.env
+logs/
+*.log
+README.md
+.vscode
+.idea
+```
+
+### Health checks
+
+Add health check to Dockerfile:
+
+```dockerfile
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD python -c "import requests; requests.get('http://localhost:8080/')" || exit 1
+```
+
+### Volume persistence
+
+Persist data outside containers:
+
+```yaml docker-compose.yml
+volumes:
+  - ./data:/app/data
+  - ./logs:/app/logs
+```
+
+## Performance optimization
+
+### Use gunicorn
+
+Modify CMD in Dockerfile for production:
+
+```dockerfile
+CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:8080", "app:server"]
+```
+
+### Layer caching
+
+Optimize build time by ordering layers:
+
+```dockerfile
+# Dependencies change less frequently
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+
+# Code changes more frequently
+COPY . .
+```
+
+This ensures pip install is cached unless requirements.txt changes.

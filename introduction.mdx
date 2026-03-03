@@ -1,0 +1,90 @@
+---
+title: Introduction to TeraBox Auto
+description: Automated TeraBox link distribution bot for Telegram channels with Google Sheets integration
+---
+
+## Welcome to TeraBox Auto
+
+TeraBox Auto is a Telegram bot that automates the distribution of TeraBox links across multiple channels. It processes photo posts with TeraBox URLs, formats them with custom templates, and distributes them to configured channels while managing engagement through random post features.
+
+<CardGroup cols={2}>
+  <Card title="Quick start" icon="rocket" href="/quickstart">
+    Get your bot up and running in minutes with our step-by-step guide
+  </Card>
+  <Card title="Installation" icon="download" href="/installation">
+    Detailed setup instructions for all dependencies and prerequisites
+  </Card>
+  <Card title="Configuration" icon="gear" href="/configuration/bot-setup">
+    Configure your bot with API tokens, channels, and custom templates
+  </Card>
+  <Card title="Commands" icon="terminal" href="/api/commands/start">
+    Complete reference of all available bot commands and features
+  </Card>
+</CardGroup>
+
+## Key features
+
+### Multi-channel distribution
+
+Automatically forward TeraBox content to all configured channels with a single post. The bot manages channel lists through Google Sheets integration.
+
+### Smart link detection
+
+Validates and extracts TeraBox URLs from multiple domains:
+- terabox.com
+- nephobox.com
+- freeterabox.com
+- teraboxapp.com
+- And 6 more supported domains
+
+### Google Sheets database
+
+Leverages Google Sheets as a lightweight database for:
+- Channel management
+- Post tracking
+- User authorization
+- Configuration storage
+
+### Flask webhook integration
+
+Runs as a Flask web server with Telegram webhook support, making it perfect for deployment on platforms like Render or Heroku.
+
+## How it works
+
+<Steps>
+  <Step title="Authorized user sends photo with caption">
+    The bot listens for photo messages from authorized users containing TeraBox links in the caption.
+  </Step>
+  <Step title="Link validation and extraction">
+    The bot extracts and validates the TeraBox URL against the list of supported domains.
+  </Step>
+  <Step title="Post formatting">
+    Content is formatted using customizable HTML templates with inline keyboard buttons.
+  </Step>
+  <Step title="Multi-channel distribution">
+    The formatted post is sent to the main channel and all configured channels from the Google Sheets database.
+  </Step>
+</Steps>
+
+<Note>
+  TeraBox Auto requires Python 3.11 and active Google Sheets API credentials to function properly.
+</Note>
+
+## Use cases
+
+**Content distribution networks**: Manage multiple Telegram channels from a single source.
+
+**Media sharing**: Distribute TeraBox-hosted content with consistent formatting across your channel network.
+
+**Engagement automation**: Use random post features to keep channels active with historical content.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Get started now" icon="play" href="/quickstart">
+    Follow the quick start guide to deploy your first bot
+  </Card>
+  <Card title="Learn the features" icon="sitemap" href="/features/channel-management">
+    Understand how the components work together
+  </Card>
+</CardGroup>

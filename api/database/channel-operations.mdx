@@ -1,0 +1,64 @@
+---
+title: Channel operations
+description: Functions for managing channel tracking in Google Sheets
+---
+
+## AddChannel
+
+Adds a new channel to the tracking database. The function checks if the channel already exists and only adds it if it's not present.
+
+```python DetaDatabase.py
+def AddChannel(ChnlId):
+  cells = channels.findall(str(ChnlId))
+  if len(cells) > 0:
+    return True
+  else:
+    h = channels.get('A51').first()
+    h1 = int(h) + 1
+    channels.update_cell(int(h1),1 ,f"{h1}")
+    channels.update_cell(int(h1),2 ,ChnlId)
+```
+
+### Parameters
+
+<ParamField path="ChnlId" type="int | str">
+  The channel ID to add to the database
+</ParamField>
+
+### Returns
+
+<ResponseField name="result" type="bool | None">
+  Returns `True` if the channel already exists, otherwise `None` after adding the new channel
+</ResponseField>
+
+### Implementation details
+
+This function interacts with the "channels" worksheet in Google Sheets:
+
+1. Searches for existing channel ID in the worksheet using `findall()`
+2. If found, returns `True` to indicate the channel already exists
+3. If not found:
+   - Reads the row counter from cell A51
+   - Increments the counter
+   - Writes the new row number to column 1
+   - Writes the channel ID to column 2
+
+## GetAllChannel
+
+Retrieves all channel IDs from the tracking database.
+
+```python DetaDatabase.py
+def GetAllChannel():
+    values_list = channels.col_values(2)
+    return values_list
+```
+
+### Returns
+
+<ResponseField name="values_list" type="list">
+  A list of all channel IDs stored in column 2 of the channels worksheet
+</ResponseField>
+
+### Implementation details
+
+This function reads column 2 from the "channels" worksheet in Google Sheets, which contains all tracked channel IDs. The list includes all values from the column, including any headers or empty cells.

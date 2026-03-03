@@ -1,0 +1,91 @@
+---
+title: Telegram webhook
+description: Receive updates from Telegram Bot API
+---
+
+## POST /{API_TOKEN}
+
+Receives and processes incoming updates from the Telegram Bot API. This endpoint is registered as the webhook URL with Telegram to receive real-time updates for bot messages, commands, and events.
+
+### URL parameters
+
+<ParamField path="API_TOKEN" type="string" required>
+  The Telegram bot API token. This token is used to authenticate webhook requests from Telegram servers.
+  
+  Example: `5844765948:AAHWS5tgMWMAKGlTk_EWgOsUdfCwQy58-hs`
+</ParamField>
+
+### Request body
+
+The request body contains a JSON object representing a Telegram Update. This is sent automatically by Telegram when an event occurs.
+
+```json
+{
+  "update_id": 123456789,
+  "message": {
+    "message_id": 1,
+    "from": {
+      "id": 123456,
+      "first_name": "John"
+    },
+    "chat": {
+      "id": 123456,
+      "type": "private"
+    },
+    "date": 1234567890,
+    "text": "/start"
+  }
+}
+```
+
+### Response
+
+<ResponseField name="status" type="string">
+  Returns `!` on successful processing
+</ResponseField>
+
+<ResponseField name="http_code" type="number">
+  Returns `200` status code
+</ResponseField>
+
+```json
+"!"
+```
+
+### Implementation
+
+The endpoint processes updates using the telebot library:
+
+```python
+@server.route('/' + API_TOKEN, methods=['POST'])
+def getMessage():
+    bot.process_new_updates([telebot.types.Update.de_json(request.stream.read().decode("utf-8"))])
+    return "!", 200
+```
+
+### Webhook URL
+
+The complete webhook URL registered with Telegram:
+
+```
+https://teraboxauto-9rzp.onrender.com/{API_TOKEN}
+```
+
+Replace `{API_TOKEN}` with your actual Telegram bot token.
+
+### Bot commands handled
+
+This webhook processes the following bot commands:
+
+- `/start` - Welcome message and authorization check
+- `/add` - Add channels to database
+- `/random` - Send random posts to channels
+- `/fetch` - Fetch channel details and subscriber counts
+
+### Content handlers
+
+The webhook also processes:
+
+- Photo messages with TeraBox links (from authorized users)
+- Channel posts (auto-forwards random posts)
+- New chat members (sends welcome post)

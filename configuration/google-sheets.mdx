@@ -1,0 +1,177 @@
+---
+title: Google Sheets setup
+description: Configure Google Sheets integration for database storage
+---
+
+## Overview
+
+TeraBox Auto uses Google Sheets as its database backend through the Google Sheets API. The integration is handled in `DetaDatabase.py` using the `gspread` library and OAuth2 service account authentication.
+
+## Prerequisites
+
+<Steps>
+  <Step title="Create a Google Cloud project">
+    1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+    2. Create a new project or select an existing one
+  </Step>
+  
+  <Step title="Enable Google Sheets API">
+    1. Navigate to "APIs & Services" > "Library"
+    2. Search for "Google Sheets API" and enable it
+    3. Also enable "Google Drive API"
+  </Step>
+  
+  <Step title="Create a service account">
+    1. Go to "APIs & Services" > "Credentials"
+    2. Click "Create Credentials" > "Service Account"
+    3. Fill in the service account details
+    4. Grant the service account appropriate roles
+  </Step>
+  
+  <Step title="Generate credentials JSON">
+    1. Click on the created service account
+    2. Go to "Keys" tab
+    3. Click "Add Key" > "Create new key" > "JSON"
+    4. Save the downloaded file as `Badnaamchora2784.json` in your project root
+    
+    <Warning>
+      Keep this credentials file secure and never commit it to version control. Add it to `.gitignore`.
+    </Warning>
+  </Step>
+</Steps>
+
+## Credentials configuration
+
+The service account credentials are loaded in `DetaDatabase.py`:
+
+```python DetaDatabase.py
+from oauth2client.service_account import ServiceAccountCredentials
+import gspread
+
+scope = [
+    "https://spreadsheets.google.com/feeds",
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/drive.file",
+    "https://www.googleapis.com/auth/drive"
+]
+
+creds = ServiceAccountCredentials.from_json_keyfile_name(
+    "Badnaamchora2784.json", 
+    scope
+)
+client = gspread.authorize(creds)
+```
+
+## Spreadsheet structure
+
+Create a Google Sheets workbook named **"TeraX2nd"** with the following structure:
+
+### Workbook: TeraX2nd
+
+The workbook must contain two worksheets:
+
+#### 1. general worksheet
+
+Stores general configuration and counters.
+
+| Cell | Description | Example Value |
+|------|-------------|---------------|
+| B1   | Last post message ID | 1234 |
+| B2   | Post channel ID (without -100 prefix) | 2191085367 |
+
+```python DetaDatabase.py
+general = ak.worksheet("general")
+
+# Get last post ID
+def GetLastPostId():
+    h = general.get('B1').first()
+    return h
+
+# Get post channel ID
+def GetPostChannelId():
+    Id = "-100" + str(general.get("B2").first())
+    return int(Id)
+```
+
+#### 2. channels worksheet
+
+Stores the list of channels where content is distributed.
+
+| Column A | Column B |
+|----------|----------|
+| Row number | Channel ID |
+| 1 | -1001234567890 |
+| 2 | -1009876543210 |
+| ... | ... |
+
+**Special cell A51:** Stores the current row counter for adding new channels.
+
+```python DetaDatabase.py
+channels = ak.worksheet("channels")
+
+# Add a new channel
+def AddChannel(ChnlId):
+    cells = channels.findall(str(ChnlId))
+    if len(cells) > 0:
+        return True
+    else:
+        h = channels.get('A51').first()
+        h1 = int(h) + 1
+        channels.update_cell(int(h1), 1, f"{h1}")
+        channels.update_cell(int(h1), 2, ChnlId)
+```
+
+## Worksheet initialization
+
+The worksheets are initialized at the top of `DetaDatabase.py`:
+
+```python DetaDatabase.py
+ak = client.open("TeraX2nd")
+general = ak.worksheet("general")
+channels = ak.worksheet("channels")
+```
+
+## Sharing the spreadsheet
+
+After creating the spreadsheet:
+
+<Steps>
+  <Step title="Copy service account email">
+    Open your credentials JSON file and copy the `client_email` value.
+  </Step>
+  
+  <Step title="Share the spreadsheet">
+    1. Open your "TeraX2nd" Google Sheets workbook
+    2. Click "Share" in the top right
+    3. Paste the service account email
+    4. Grant "Editor" permissions
+  </Step>
+</Steps>
+
+<Note>
+  The service account email typically looks like: `service-account-name@project-id.iam.gserviceaccount.com`
+</Note>
+
+## Database functions
+
+The following functions are available for interacting with the database:
+
+```python
+# Check if user is authorized
+CheckAuthUser(UserId)
+
+# Add a channel to the distribution list
+AddChannel(ChnlId)
+
+# Get all channels
+GetAllChannel()
+
+# Update total post count
+UpdateTotalPost(msgid)
+
+# Get last post ID
+GetLastPostId()
+
+# Get post channel ID
+GetPostChannelId()
+```

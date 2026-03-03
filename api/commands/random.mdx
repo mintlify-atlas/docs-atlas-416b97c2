@@ -1,0 +1,100 @@
+---
+title: /random command
+description: Send 10 random posts from the post channel to all registered channels
+---
+
+## Overview
+
+The `/random` command distributes 10 randomly selected posts from the main post channel to all channels registered in the database. This is useful for promoting existing content across the network.
+
+## Function signature
+
+```python
+@bot.message_handler(commands=['random'])
+def randomPosts(m):
+```
+
+## Authorization
+
+<Warning>
+This command does not explicitly check for authorization, but should only be used by bot administrators due to its bulk posting functionality.
+</Warning>
+
+## Behavior
+
+When invoked, the command:
+
+1. Retrieves the last post ID using `GetLastPostId()`
+2. Gets all registered channels using `GetAllChannel()`
+3. Generates 10 random post IDs between 2 and the last post ID
+4. For each random post:
+   - Forwards the message to all registered channels
+   - Waits 2 seconds between forwards
+   - Sends progress update to the command issuer
+
+## Response examples
+
+### Progress updates
+
+As the command executes, you'll receive progress messages:
+
+```
+1/10
+2/10
+3/10
+...
+10/10
+```
+
+## Code implementation
+
+```python
+@bot.message_handler(commands=['random'])
+def randomPosts(m):
+  h = GetLastPostId()
+  ChnlList = GetAllChannel()
+  x = random.sample(range(2,int(h)), 10)
+  yyy = 0
+  for xt in x:
+    for i in ChnlList:
+      bot.forward_message(chat_id =i, from_chat_id = POSTCHANNEL, message_id = xt)
+      time.sleep(2)
+    yyy+=1
+    bot.send_message(m.chat.id,f"{yyy}/10")
+```
+
+## Usage
+
+Simply send the command:
+
+```
+/random
+```
+
+## Parameters
+
+This command takes no parameters.
+
+## Performance considerations
+
+<Info>
+The command includes a 2-second delay between each forward to comply with Telegram's rate limits.
+</Info>
+
+### Execution time
+
+If you have N registered channels:
+- Time per post: N × 2 seconds
+- Total time: 10 × N × 2 seconds
+
+For example, with 5 channels:
+- 5 × 2 = 10 seconds per post
+- 10 × 10 = 100 seconds total (approximately 1.7 minutes)
+
+## Notes
+
+- Posts are selected randomly using `random.sample()` to ensure no duplicates
+- The range starts at 2 (skipping post ID 1)
+- All registered channels receive the same 10 random posts
+- The command provides real-time progress feedback
+- Uses `POSTCHANNEL` as the source channel (configured in environment)

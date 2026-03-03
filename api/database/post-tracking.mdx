@@ -1,0 +1,43 @@
+---
+title: Post tracking
+description: Functions for managing post tracking and message IDs in Google Sheets
+---
+
+## UpdateTotalPost
+
+Updates the last processed message ID in the database.
+
+```python DetaDatabase.py
+def UpdateTotalPost(msgid):
+    general.update("B1",msgid)
+```
+
+### Parameters
+
+<ParamField path="msgid" type="int | str">
+  The message ID to store as the last processed post
+</ParamField>
+
+### Implementation details
+
+This function writes to cell B1 in the "general" worksheet of Google Sheets. This cell serves as a tracker for the last processed message ID, allowing the bot to resume from the correct position after restarts.
+
+## GetLastPostId
+
+Retrieves the last processed message ID from the database.
+
+```python DetaDatabase.py
+def GetLastPostId():
+    h = general.get('B1').first()
+    return h
+```
+
+### Returns
+
+<ResponseField name="h" type="str">
+  The last processed message ID stored in cell B1 of the general worksheet
+</ResponseField>
+
+### Implementation details
+
+This function reads from cell B1 in the "general" worksheet of Google Sheets. The `.first()` method extracts the first (and only) value from the cell range. This value represents the last message ID that was processed by the bot, enabling continuity across sessions.

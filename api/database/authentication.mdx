@@ -1,0 +1,39 @@
+---
+title: Authentication
+description: User authentication and authorization functions
+---
+
+## CheckAuthUser
+
+Verifies if a user is authorized to use the bot by checking their user ID against the authorized users list.
+
+```python DetaDatabase.py
+def CheckAuthUser(UserId):
+    if int(UserId) in AuthUser:
+        return True
+    else:
+        None
+```
+
+### Parameters
+
+<ParamField path="UserId" type="int | str">
+  The Telegram user ID to verify against the authorized users list
+</ParamField>
+
+### Returns
+
+<ResponseField name="result" type="bool | None">
+  Returns `True` if the user is authorized, otherwise `None`
+</ResponseField>
+
+### Implementation details
+
+This function checks if the provided user ID exists in the `AuthUser` list imported from the config module:
+
+- Converts the `UserId` parameter to an integer for comparison
+- Checks membership in the `AuthUser` list (defined in `config.py`)
+- Returns `True` for authorized users
+- Returns `None` (implicit) for unauthorized users
+
+The `AuthUser` list is defined in the configuration file and contains the Telegram user IDs of users who have permission to interact with the bot's administrative functions.

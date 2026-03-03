@@ -1,0 +1,78 @@
+---
+title: Webhook setup
+description: Configure and verify Telegram webhook registration
+---
+
+## GET /
+
+Sets up the Telegram webhook by removing any existing webhook and registering a new one. This endpoint is used to initialize or refresh the webhook configuration with Telegram servers.
+
+### Request
+
+No parameters required. Simply make a GET request to the root endpoint.
+
+```bash
+curl https://teraboxauto-9rzp.onrender.com/
+```
+
+### Response
+
+<ResponseField name="status" type="string">
+  Returns `!uk` on successful webhook setup
+</ResponseField>
+
+<ResponseField name="http_code" type="number">
+  Returns `200` status code
+</ResponseField>
+
+```json
+"!uk"
+```
+
+### Implementation
+
+The endpoint performs two operations:
+
+1. Removes any existing webhook configuration
+2. Sets a new webhook URL with the Telegram API
+
+```python
+@server.route("/")
+def webhook():
+    bot.remove_webhook()
+    bot.set_webhook(url='https://teraboxauto-9rzp.onrender.com/' + f"{API_TOKEN}")
+    return "!uk", 200
+```
+
+### Webhook URL configured
+
+After calling this endpoint, the following webhook URL is registered with Telegram:
+
+```
+https://teraboxauto-9rzp.onrender.com/{API_TOKEN}
+```
+
+Where `{API_TOKEN}` is the bot's Telegram API token.
+
+### Usage
+
+**When to use this endpoint:**
+
+- Initial bot deployment
+- After changing hosting URLs
+- When webhook stops receiving updates
+- To refresh webhook configuration
+
+**Response interpretation:**
+
+- `!uk` with status `200` indicates successful webhook registration
+- Telegram will now send updates to the configured webhook URL
+- Updates are processed by the POST /{API_TOKEN} endpoint
+
+### Verification
+
+After calling this endpoint, you can verify the webhook is working by:
+
+1. Sending a message to your bot
+2. Checking if the bot responds
+3. Monitoring server logs for incoming POST requests

@@ -1,0 +1,75 @@
+---
+title: Bot setup
+description: Configure your Telegram bot and obtain the API token
+---
+
+## Prerequisites
+
+Before setting up TeraBox Auto, you need to create a Telegram bot and obtain an API token from BotFather.
+
+<Steps>
+  <Step title="Create a new bot">
+    Open Telegram and search for [@BotFather](https://t.me/BotFather). Start a chat and send the `/newbot` command.
+  </Step>
+  
+  <Step title="Choose a name and username">
+    Follow BotFather's prompts to:
+    - Choose a display name for your bot
+    - Choose a unique username ending in "bot" (e.g., `myterabox_bot`)
+  </Step>
+  
+  <Step title="Save your API token">
+    BotFather will provide an API token in the format:
+    
+    ```
+    5844765948:AAHWS5tgMWMAKGlTk_EWgOsUdfCwQy58-hs
+    ```
+    
+    <Warning>
+      Keep this token secure and never share it publicly. Anyone with this token can control your bot.
+    </Warning>
+  </Step>
+  
+  <Step title="Configure the token in your application">
+    In `app.py`, update the `API_TOKEN` variable with your bot token:
+    
+    ```python app.py
+    API_TOKEN = 'YOUR_BOT_TOKEN_HERE'
+    bot = telebot.TeleBot(API_TOKEN)
+    ```
+  </Step>
+</Steps>
+
+## Authorized users
+
+The bot restricts access to authorized users only. Configure authorized user IDs in `config.py`:
+
+```python config.py
+AuthUser = [5507466970, 1958848922]
+```
+
+<Note>
+  To find your Telegram user ID, you can use bots like [@userinfobot](https://t.me/userinfobot).
+</Note>
+
+## Bot initialization
+
+The bot is initialized in `app.py` using the pyTelegramBotAPI library:
+
+```python app.py
+import telebot
+
+API_TOKEN = '5844765948:AAHWS5tgMWMAKGlTk_EWgOsUdfCwQy58-hs'
+bot = telebot.TeleBot(API_TOKEN)
+```
+
+The bot checks user authorization on the `/start` command:
+
+```python app.py
+@bot.message_handler(commands=['start'])
+def send_welcome(m):
+    if CheckAuthUser(m.chat.id) == True:
+        bot.reply_to(m, "Runnung..")
+    else:
+        bot.reply_to(m, "you are not authrise")
+```

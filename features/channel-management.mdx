@@ -1,0 +1,193 @@
+---
+title: Channel management
+description: Learn how TeraBox Auto manages multiple Telegram channels using Google Sheets integration for dynamic channel distribution
+---
+
+## Overview
+
+TeraBox Auto uses a Google Sheets-based system to manage multiple Telegram channels dynamically. This allows for easy addition, removal, and tracking of channels without code changes.
+
+## Google Sheets integration
+
+The channel management system is powered by the Google Sheets API through the `DetaDatabase.py` module:
+
+```python DetaDatabase.py
+scope = ["https://spreadsheets.google.com/feeds",
+         'https://www.googleapis.com/auth/spreadsheets',
+         "https://www.googleapis.com/auth/drive.file",
+         "https://www.googleapis.com/auth/drive"]
+creds = ServiceAccountCredentials.from_json_keyfile_name("Badnaamchora2784.json", scope)
+client = gspread.authorize(creds)
+ak = client.open("TeraX2nd")
+general = ak.worksheet("general")
+channels = ak.worksheet("channels")
+```
+
+### Required credentials
+
+The system requires a Google service account JSON file (`Badnaamchora2784.json`) with appropriate OAuth2 permissions for:
+- Google Sheets API
+- Google Drive API
+
+## Adding channels
+
+Channels can be added using the `/add` command followed by channel IDs:
+
+```python app.py
+@bot.message_handler(commands=['add'])
+def add_channels(m):
+    tt = util.extract_arguments(m.text)
+    ListChnl = tt.split("\n")
+    for i in ListChnl:
+      Integer = isinstance(i, int)
+      if Integer == True:
+        xx = AddChannel(i)
+        if xx == True:
+          bot.reply_to(m,f"{i} Already In Database")
+          time.sleep(1)
+        else:
+          bot.reply_to(m,f"Added {i}")
+          time.sleep(2)
+      else:
+          bot.reply_to(m,f"Invalid {i}")
+```
+
+### AddChannel function
+
+The `AddChannel` function in `DetaDatabase.py` handles the database operations:
+
+```python DetaDatabase.py
+def AddChannel(ChnlId):
+  cells = channels.findall(str(ChnlId))
+  if len(cells) > 0:
+    return True
+  else:
+    h = channels.get('A51').first()
+    h1 = int(h) + 1
+    channels.update_cell(int(h1),1 ,f"{h1}")
+    channels.update_cell(int(h1),2 ,ChnlId)
+```
+
+<Note>
+The function checks if the channel already exists before adding it to prevent duplicates.
+</Note>
+
+## Retrieving all channels
+
+The system retrieves all managed channels from column 2 of the Google Sheet:
+
+```python DetaDatabase.py
+def GetAllChannel():
+    values_list = channels.col_values(2)
+    return values_list
+```
+
+This list is used throughout the application for:
+- Auto-posting to all channels
+- Random post distribution
+- Channel analytics
+
+## Channel analytics
+
+The `/fetch` command retrieves detailed information about all managed channels:
+
+```python app.py
+@bot.message_handler(commands=['fetch'])
+def fetchresult(m):
+  chnlList = GetAllChannel()
+  ChatDetail = """
+  Id = {}
+  Name = {}
+  Url = {}
+  Subscribers = {}
+  """
+  for i in chnlList:
+    try:
+      chatdtl = bot.get_chat(f"{i}")
+      chatId = chatdtl.id
+      chatTtl = chatdtl.title
+      chatUrl = chatdtl.invite_link
+      Susb = bot.get_chat_members_count(f"{i}")
+      bot.send_message(m.chat.id,ChatDetail.format(chatId,chatTtl,chatUrl,Susb))
+    except Exception as e:
+      bot.send_message(m.chat.id,f"id={i}\n\n{e}")
+```
+
+### Retrieved information
+
+<CardGroup cols={2}>
+  <Card title="Channel ID" icon="hashtag">
+    Unique Telegram channel identifier
+  </Card>
+  <Card title="Channel name" icon="signature">
+    Display name of the channel
+  </Card>
+  <Card title="Invite link" icon="link">
+    Public or private invite URL
+  </Card>
+  <Card title="Subscriber count" icon="users">
+    Total number of channel members
+  </Card>
+</CardGroup>
+
+## Auto-detection of new channels
+
+When a new post is made in any channel, the system automatically adds it to the database:
+
+```python app.py
+@bot.channel_post_handler()
+def Send_Post(m):
+  h = GetLastPostId()
+  ChnlList = GetAllChannel()
+  for i in range(3):
+    pstid = random.randint(2,int(h))
+    bot.forward_message(chat_id = m.chat.id, from_chat_id = POSTCHANNEL, message_id = pstid)
+    time.sleep(2)
+  if m.chat.id in ChnlList:
+    msg = bot.send_message(m.chat.id,AdText.format("https://t.me/+qTEbmFdW9U5hZTFl"),parse_mode="html")
+  else:
+    AddChannel(m.chat.id)
+    msg = bot.send_message(m.chat.id,AdText.format("https://t.me/+qTEbmFdW9U5hZTFl"),parse_mode="html")
+```
+
+<Warning>
+The auto-detection feature automatically adds any channel that posts content. Ensure bot permissions are properly configured.
+</Warning>
+
+## Authorized users
+
+Only authorized users can manage channels. Authorization is defined in `config.py`:
+
+```python config.py
+AuthUser = [5507466970,1958848922]
+```
+
+The authorization check is performed via:
+
+```python DetaDatabase.py
+def CheckAuthUser(UserId):
+    if int(UserId) in AuthUser:
+        return True
+    else:
+        None
+```
+
+## Best practices
+
+<AccordionGroup>
+  <Accordion title="Use numeric channel IDs">
+    Always use numeric Telegram channel IDs (including the -100 prefix for supergroups) when adding channels.
+  </Accordion>
+  
+  <Accordion title="Monitor failed channels">
+    Regularly run `/fetch` to identify channels where the bot has lost access or permissions.
+  </Accordion>
+  
+  <Accordion title="Backup Google Sheets">
+    Regularly export the Google Sheets database as the channel list is critical for operations.
+  </Accordion>
+  
+  <Accordion title="Rotate service account credentials">
+    Periodically update the Google service account JSON file for security.
+  </Accordion>
+</AccordionGroup>

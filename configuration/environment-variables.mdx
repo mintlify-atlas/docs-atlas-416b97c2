@@ -1,0 +1,110 @@
+---
+title: Environment variables
+description: Required environment variables for running TeraBox Auto
+---
+
+## Required variables
+
+TeraBox Auto requires the following environment variables to run properly.
+
+### PORT
+
+The port number on which the Flask server will run.
+
+```bash
+PORT=1000
+```
+
+<Note>
+  If the `PORT` environment variable is not set, the application defaults to port 1000.
+</Note>
+
+**Usage in app.py:**
+
+```python app.py
+if __name__ == "__main__":
+    server.run(host="0.0.0.0", port=int(os.environ.get('PORT', 1000)))
+```
+
+## Configuration file variables
+
+While not environment variables, these important configuration values are stored in `config.py`:
+
+### POSTCHANNEL
+
+The main channel ID where posts are stored and managed.
+
+```python config.py
+POSTCHANNEL = -1002191085367
+```
+
+<Warning>
+  This value is overridden at runtime by `GetPostChannelId()` from the Google Sheets database.
+</Warning>
+
+### GENERALCHANNEL
+
+The invite link to the general channel for users to join.
+
+```python config.py
+GENERALCHANNEL = "https://t.me/+qTEbmFdW9U5hZTFl"
+```
+
+### AuthUser
+
+List of authorized Telegram user IDs who can control the bot.
+
+```python config.py
+AuthUser = [5507466970, 1958848922]
+```
+
+## API token
+
+The Telegram Bot API token is hardcoded in `app.py`:
+
+```python app.py
+API_TOKEN = '5844765948:AAHWS5tgMWMAKGlTk_EWgOsUdfCwQy58-hs'
+```
+
+<Warning>
+  For production deployments, it's recommended to move the API token to an environment variable:
+  
+  ```python
+  API_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN')
+  ```
+</Warning>
+
+## Setting environment variables
+
+### Local development
+
+Create a `.env` file in your project root:
+
+```bash .env
+PORT=1000
+TELEGRAM_BOT_TOKEN=your_bot_token_here
+```
+
+### Production (Render)
+
+For Render deployments, set environment variables in the Render dashboard:
+
+<Steps>
+  <Step title="Open your service">
+    Navigate to your service in the Render dashboard.
+  </Step>
+  
+  <Step title="Go to Environment">
+    Click on the "Environment" tab in the left sidebar.
+  </Step>
+  
+  <Step title="Add variables">
+    Add your environment variables:
+    - Key: `PORT`, Value: `1000`
+    - Key: `TELEGRAM_BOT_TOKEN`, Value: `your_actual_token`
+  </Step>
+  
+  <Step title="Save and redeploy">
+    Save the changes. Render will automatically redeploy your service.
+  </Step>
+</Steps>

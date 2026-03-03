@@ -1,0 +1,185 @@
+---
+title: Heroku deployment
+description: Deploy TeraBox Auto bot to Heroku with webhook support
+---
+
+## Overview
+
+Heroku is a cloud platform that supports deploying Python applications with minimal configuration. TeraBox Auto uses a web dyno to run the Flask server with webhook-based Telegram bot updates.
+
+## Prerequisites
+
+Before deploying to Heroku, ensure you have:
+
+- A Heroku account
+- Heroku CLI installed on your local machine
+- Git installed and repository initialized
+- Telegram bot token from BotFather
+
+## Deployment steps
+
+<Steps>
+  <Step title="Install Heroku CLI">
+    Download and install the Heroku CLI from [heroku.com/cli](https://devcenter.heroku.com/articles/heroku-cli).
+
+    Verify installation:
+    ```bash
+    heroku --version
+    ```
+  </Step>
+
+  <Step title="Login to Heroku">
+    Authenticate your Heroku account:
+    ```bash
+    heroku login
+    ```
+  </Step>
+
+  <Step title="Create Heroku application">
+    Create a new Heroku app:
+    ```bash
+    heroku create your-app-name
+    ```
+
+    This will create a new app and add a git remote named `heroku`.
+  </Step>
+
+  <Step title="Configure environment variables">
+    Set the required environment variables:
+    ```bash
+    heroku config:set PORT=8080
+    ```
+
+    <Note>
+    The `PORT` variable is automatically set by Heroku, but you can override it if needed. The application defaults to port 1000 if not specified.
+    </Note>
+  </Step>
+
+  <Step title="Deploy the application">
+    Push your code to Heroku:
+    ```bash
+    git push heroku main
+    ```
+
+    Heroku will automatically detect the Python runtime and install dependencies.
+  </Step>
+
+  <Step title="Verify deployment">
+    Check that the web dyno is running:
+    ```bash
+    heroku ps
+    ```
+
+    Open your application:
+    ```bash
+    heroku open
+    ```
+  </Step>
+
+  <Step title="Set up webhook">
+    After deployment, visit your app's root URL to initialize the webhook:
+    ```
+    https://your-app-name.herokuapp.com/
+    ```
+
+    This will register the webhook with Telegram.
+  </Step>
+</Steps>
+
+## Configuration files
+
+### Procfile
+
+The `Procfile` tells Heroku how to run your application:
+
+```
+web: python app.py
+```
+
+This starts the Flask server as a web dyno.
+
+### runtime.txt
+
+Specifies the Python version:
+
+```
+python-3.11.0
+```
+
+<Warning>
+Ensure your local Python version matches the runtime.txt version to avoid compatibility issues.
+</Warning>
+
+### requirements.txt
+
+Heroku automatically installs these dependencies:
+
+```
+Flask
+Gunicorn
+pyTelegramBotAPI
+random2
+gspread
+oauth2client
+```
+
+## Managing your application
+
+### View logs
+
+Monitor application logs in real-time:
+
+```bash
+heroku logs --tail
+```
+
+### Scale dynos
+
+Ensure one web dyno is running:
+
+```bash
+heroku ps:scale web=1
+```
+
+### Restart application
+
+Restart the application after configuration changes:
+
+```bash
+heroku restart
+```
+
+## Troubleshooting
+
+### Application crashes on startup
+
+Check the logs for errors:
+```bash
+heroku logs --tail
+```
+
+Common issues:
+- Missing dependencies in requirements.txt
+- Incorrect PORT configuration
+- Invalid Telegram bot token
+
+### Webhook not working
+
+1. Visit the root URL to reinitialize the webhook
+2. Verify the webhook URL in app.py matches your Heroku domain
+3. Check that the web dyno is running with `heroku ps`
+
+### Database connection errors
+
+If using Deta Database, ensure the database is accessible from Heroku's network. You may need to configure database credentials as environment variables.
+
+## Cost considerations
+
+<Note>
+Heroku offers a free tier with limitations:
+- Apps sleep after 30 minutes of inactivity
+- 550-1000 free dyno hours per month
+- Apps must sleep at least 6 hours per day on free tier
+
+For production use, consider upgrading to a paid dyno type.
+</Note>

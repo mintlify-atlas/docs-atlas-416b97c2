@@ -1,0 +1,172 @@
+---
+title: Telegram webhook
+description: Configure webhook for receiving Telegram updates
+---
+
+## Overview
+
+TeraBox Auto uses webhooks to receive updates from Telegram instead of polling. The webhook is configured through Flask routes and Telegram's Bot API.
+
+## Webhook setup
+
+The webhook configuration is defined in `app.py` with two main routes:
+
+### Webhook endpoint
+
+The main webhook endpoint that receives updates from Telegram:
+
+```python app.py
+@server.route('/' + API_TOKEN, methods=['POST'])
+def getMessage():
+    bot.process_new_updates([
+        telebot.types.Update.de_json(
+            request.stream.read().decode("utf-8")
+        )
+    ])
+    return "!", 200
+```
+
+<Note>
+  The webhook URL uses the API token as part of the path for security. This ensures only Telegram can send updates to your bot.
+</Note>
+
+### Webhook registration route
+
+A route to register the webhook with Telegram:
+
+```python app.py
+@server.route("/")
+def webhook():
+    bot.remove_webhook()
+    bot.set_webhook(url='https://teraboxauto-9rzp.onrender.com/' + f"{API_TOKEN}")
+    return "!uk", 200
+```
+
+## Setting up your webhook
+
+<Steps>
+  <Step title="Deploy your application">
+    Deploy your Flask application to a hosting service with HTTPS support (e.g., Render, Heroku, Railway).
+    
+    <Warning>
+      Telegram webhooks require HTTPS. HTTP URLs will not work.
+    </Warning>
+  </Step>
+  
+  <Step title="Get your deployment URL">
+    After deployment, copy your application's URL. For example:
+    
+    ```
+    https://teraboxauto-9rzp.onrender.com
+    ```
+  </Step>
+  
+  <Step title="Update the webhook URL">
+    In `app.py`, update the `set_webhook` URL with your deployment URL:
+    
+    ```python app.py
+    bot.set_webhook(
+        url='https://your-app-name.onrender.com/' + f"{API_TOKEN}"
+    )
+    ```
+  </Step>
+  
+  <Step title="Register the webhook">
+    Visit the root route of your application in a browser:
+    
+    ```
+    https://your-app-name.onrender.com/
+    ```
+    
+    This will execute the webhook registration. You should see "!uk" in the browser.
+  </Step>
+</Steps>
+
+## Flask server configuration
+
+The Flask server is configured to run on all interfaces and uses the PORT environment variable:
+
+```python app.py
+import os
+from flask import Flask, request
+
+server = Flask(__name__)
+
+if __name__ == "__main__":
+    server.run(
+        host="0.0.0.0", 
+        port=int(os.environ.get('PORT', 1000))
+    )
+```
+
+## Webhook URL structure
+
+The complete webhook URL follows this pattern:
+
+```
+https://your-domain.com/{API_TOKEN}
+```
+
+**Example:**
+
+```
+https://teraboxauto-9rzp.onrender.com/5844765948:AAHWS5tgMWMAKGlTk_EWgOsUdfCwQy58-hs
+```
+
+<Warning>
+  Never share your webhook URL publicly as it contains your API token.
+</Warning>
+
+## Verifying webhook status
+
+You can verify your webhook status using the Telegram Bot API:
+
+```bash
+curl https://api.telegram.org/bot{YOUR_BOT_TOKEN}/getWebhookInfo
+```
+
+This returns information about your current webhook configuration, including:
+- URL
+- Pending update count
+- Last error date and message (if any)
+
+## Troubleshooting
+
+### Webhook not receiving updates
+
+1. **Check HTTPS:** Ensure your URL uses HTTPS, not HTTP
+2. **Verify webhook is set:** Use `getWebhookInfo` to confirm the webhook is registered
+3. **Check firewall:** Ensure your server accepts incoming connections on the configured port
+4. **Review logs:** Check your application logs for errors
+
+### Remove existing webhook
+
+If you need to switch from webhook to polling or reset the webhook:
+
+```python
+bot.remove_webhook()
+```
+
+Or via API:
+
+```bash
+curl https://api.telegram.org/bot{YOUR_BOT_TOKEN}/deleteWebhook
+```
+
+## Webhook vs polling
+
+The application is configured for webhooks by default. The polling code is commented out:
+
+```python app.py
+# bot.infinity_polling() 
+```
+
+**Advantages of webhooks:**
+- Lower latency for receiving updates
+- More efficient for production deployments
+- Required for serverless deployments
+
+**When to use polling:**
+- Local development without HTTPS
+- Testing and debugging
+- Simple deployments without public URLs

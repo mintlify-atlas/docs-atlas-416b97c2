@@ -1,0 +1,249 @@
+---
+title: Render deployment
+description: Deploy TeraBox Auto bot to Render with automatic webhook configuration
+---
+
+## Overview
+
+Render is a modern cloud platform that provides free hosting for web services. TeraBox Auto can be deployed to Render using the webhook-based approach with automatic deployment from Git repositories.
+
+## Prerequisites
+
+Before deploying to Render, ensure you have:
+
+- A Render account
+- GitHub, GitLab, or Bitbucket repository with your code
+- Telegram bot token from BotFather
+
+## Deployment steps
+
+<Steps>
+  <Step title="Create Render account">
+    Sign up at [render.com](https://render.com) using your GitHub, GitLab, or Bitbucket account.
+  </Step>
+
+  <Step title="Create new web service">
+    From the Render dashboard:
+    1. Click "New +" button
+    2. Select "Web Service"
+    3. Connect your repository
+    4. Grant Render access to the repository
+  </Step>
+
+  <Step title="Configure service settings">
+    Set the following configuration:
+
+    <CodeGroup>
+    ```text Name
+    terabox-auto-bot
+    ```
+
+    ```text Environment
+    Python 3
+    ```
+
+    ```text Build Command
+    pip install -r requirements.txt
+    ```
+
+    ```text Start Command
+    python app.py
+    ```
+    </CodeGroup>
+  </Step>
+
+  <Step title="Configure environment variables">
+    In the "Environment" section, add:
+
+    | Key | Value |
+    |-----|-------|
+    | `PORT` | `8080` |
+    | `PYTHON_VERSION` | `3.11.0` |
+
+    <Note>
+    Render automatically sets the `PORT` environment variable, which the application reads via `os.environ.get('PORT', 1000)`.
+    </Note>
+  </Step>
+
+  <Step title="Select instance type">
+    Choose the free tier:
+    - **Instance Type**: Free
+    - **Region**: Choose the closest region to your users
+  </Step>
+
+  <Step title="Deploy service">
+    Click "Create Web Service" to start the deployment.
+
+    Render will:
+    1. Clone your repository
+    2. Install dependencies from requirements.txt
+    3. Start the Flask application
+    4. Assign a URL like `https://terabox-auto-bot.onrender.com`
+  </Step>
+
+  <Step title="Update webhook URL">
+    After deployment, update the webhook URL in `app.py`:
+
+    ```python app.py
+    @server.route("/")
+    def webhook():
+        bot.remove_webhook()
+        bot.set_webhook(url='https://your-app-name.onrender.com/' + f"{API_TOKEN}")
+        return "!uk", 200
+    ```
+
+    Replace `your-app-name` with your actual Render service name.
+  </Step>
+
+  <Step title="Initialize webhook">
+    Visit your service URL to trigger webhook registration:
+    ```
+    https://your-app-name.onrender.com/
+    ```
+
+    You should see "!uk" response indicating successful webhook setup.
+  </Step>
+</Steps>
+
+## Configuration files
+
+### requirements.txt
+
+Render automatically installs these dependencies during build:
+
+```
+Flask
+Gunicorn
+pyTelegramBotAPI
+random2
+gspread
+oauth2client
+```
+
+### runtime.txt
+
+Specifies Python version (Render reads this automatically):
+
+```
+python-3.11.0
+```
+
+## Automatic deployments
+
+Render supports automatic deployments from your Git repository:
+
+1. Go to your service settings
+2. Enable "Auto-Deploy"
+3. Select the branch to deploy (typically `main` or `master`)
+
+Now every push to that branch will trigger a new deployment.
+
+## Managing your service
+
+### View logs
+
+Access real-time logs from the Render dashboard:
+1. Navigate to your service
+2. Click on the "Logs" tab
+3. Use filters to search for specific events
+
+### Manual deploy
+
+Trigger a manual deployment:
+1. Go to your service dashboard
+2. Click "Manual Deploy"
+3. Select the branch to deploy
+
+### Suspend service
+
+Free tier services spin down after inactivity:
+- Services sleep after 15 minutes of no incoming traffic
+- First request after sleep takes 30-60 seconds to respond
+
+<Warning>
+On the free tier, services automatically spin down after 15 minutes of inactivity. The first request after this will experience a cold start delay.
+</Warning>
+
+## Environment variables management
+
+### Add variables
+
+From the service dashboard:
+1. Click "Environment" in the left sidebar
+2. Click "Add Environment Variable"
+3. Enter key and value
+4. Click "Save Changes"
+
+### Update variables
+
+Changing environment variables triggers a new deployment automatically.
+
+## Troubleshooting
+
+### Build failures
+
+Check the build logs for missing dependencies:
+```text
+If you see "ModuleNotFoundError", ensure the module is listed in requirements.txt
+```
+
+### Service not starting
+
+Common issues:
+- Incorrect start command (should be `python app.py`)
+- Missing PORT configuration
+- Python version mismatch
+
+### Webhook errors
+
+1. Verify the webhook URL in app.py matches your Render domain
+2. Ensure the service is running (not spun down)
+3. Check logs for Telegram API errors
+
+### Database connectivity
+
+If using external databases:
+- Ensure database allows connections from Render's IP ranges
+- Configure database credentials as environment variables
+- Use connection pooling to handle service restarts
+
+## Performance optimization
+
+### Keep service active
+
+To prevent free tier spin-down:
+1. Use a uptime monitoring service (UptimeRobot, etc.)
+2. Configure it to ping your service every 10-14 minutes
+
+<Note>
+This is only necessary for free tier services. Paid services don't spin down.
+</Note>
+
+### Use Gunicorn
+
+For better performance, modify the start command to use Gunicorn:
+
+```bash
+gunicorn -w 4 -b 0.0.0.0:$PORT app:server
+```
+
+Update your app.py to support both development and production:
+
+```python
+if __name__ == "__main__":
+    server.run(host="0.0.0.0", port=int(os.environ.get('PORT', 1000)))
+```
+
+## Cost considerations
+
+<Note>
+Render free tier includes:
+- 750 hours of free runtime per month
+- Services spin down after 15 minutes of inactivity
+- Shared resources with slower performance
+
+For production applications, consider upgrading to a paid plan for:
+- Always-on services
+- Better performance
+- More resources
+</Note>
