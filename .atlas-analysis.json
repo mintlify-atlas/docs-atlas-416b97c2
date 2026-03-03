@@ -1,0 +1,99 @@
+{
+  "projectType": "saas",
+  "projectName": "TeraBox Auto",
+  "projectDescription": "Automated Telegram bot for managing and distributing TeraBox links across multiple channels",
+  "theme": "aspen",
+  "primaryColor": "#0088cc",
+  "lightColor": "#64B5F6",
+  "darkColor": "#1976D2",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": ["introduction", "quickstart", "installation"]
+          },
+          {
+            "group": "Core Features",
+            "pages": [
+              "features/channel-management",
+              "features/auto-posting",
+              "features/database-integration",
+              "features/url-validation"
+            ]
+          },
+          {
+            "group": "Configuration",
+            "pages": [
+              "configuration/bot-setup",
+              "configuration/environment-variables",
+              "configuration/google-sheets",
+              "configuration/telegram-webhook"
+            ]
+          },
+          {
+            "group": "Deployment",
+            "pages": [
+              "deployment/heroku",
+              "deployment/render",
+              "deployment/docker"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Bot Commands",
+            "pages": [
+              "api/commands/start",
+              "api/commands/add",
+              "api/commands/random",
+              "api/commands/fetch"
+            ]
+          },
+          {
+            "group": "Webhook Endpoints",
+            "pages": [
+              "api/webhooks/telegram",
+              "api/webhooks/health"
+            ]
+          },
+          {
+            "group": "Database Functions",
+            "pages": [
+              "api/database/channel-operations",
+              "api/database/post-tracking",
+              "api/database/authentication"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Automated TeraBox link distribution across multiple Telegram channels",
+    "Google Sheets integration for channel management and tracking",
+    "Support for multiple TeraBox domains (terabox.com, nephobox.com, etc.)",
+    "Random post forwarding for engagement",
+    "User authorization and access control",
+    "Webhook-based Telegram bot implementation",
+    "Channel subscriber analytics and monitoring"
+  ],
+  "publicApiSurface": [
+    "/start - Initialize bot and check authorization",
+    "/add - Add channels to distribution list",
+    "/random - Forward random posts to channels",
+    "/fetch - Retrieve channel statistics and details",
+    "POST /{API_TOKEN} - Telegram webhook endpoint",
+    "GET / - Health check and webhook setup",
+    "AddChannel(channel_id) - Add channel to database",
+    "GetAllChannel() - Retrieve all registered channels",
+    "CheckAuthUser(user_id) - Verify user authorization",
+    "UpdateTotalPost(msg_id) - Update post counter",
+    "GetLastPostId() - Get latest post ID"
+  ]
+}
